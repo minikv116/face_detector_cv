@@ -34,8 +34,8 @@
 **1) Клонирование репозитория**  
 
 ```
-git clone https://github.com/sergey21000/face-detector-deepface.git
-cd face-detector-deepface
+git clone https://github.com/minikv116/face_detector_cv.git
+cd face_detector_cv
 ```
 
 **2) Создание и активация виртуального окружения (опционально)**

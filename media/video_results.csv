@@ -1,0 +1,8 @@
+age,gender,race,angry,disgust,fear,happy,sad,surprise,neutral
+28,Man,black,2,0,3,1,15,0,0
+27,Man,asian,5,0,3,2,2,0,1
+28,Man,white,9,0,0,0,4,0,1
+29,Man,white,2,0,0,0,1,0,0
+29,Man,white,0,0,1,0,11,0,0
+31,Woman,white,0,0,0,9,0,0,0
+29,Man,asian,0,0,0,0,1,0,0

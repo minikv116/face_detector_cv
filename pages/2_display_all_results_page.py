@@ -103,41 +103,70 @@ else:
         # ===================== Построение группированных столбчатых графиков =====================
         st.subheader("Группированные столбчатые графики")
         col4, col5 = st.columns(2)
+
+        # Группированные столбчатые графики
+        #st.subheader("Группированные столбчатые графики")
+
+        # График: Распределение эмоций по полу
         with col4:
             st.markdown("**Распределение эмоций по полу**")
+            
+            # Копируем данные по столбцу 'gender' и списку эмоций
             df_gender = combined_df[['gender'] + emotions].copy()
+            # Преобразуем DataFrame из широкого формата в длинный (melt)
             df_gender = df_gender.melt(id_vars='gender', value_vars=emotions,
-                                       var_name='emotion', value_name='count')
+                                    var_name='emotion', value_name='count')
+            # Группируем данные по полу и эмоции для подсчёта суммы
             df_gender = df_gender.groupby(['gender', 'emotion'], as_index=False)['count'].sum()
+            # Преобразуем названия эмоций согласно сопоставлению (emotion_map)
             df_gender['emotion'] = df_gender['emotion'].map(emotion_map)
+            
+            # Создаём группированный столбчатый график с использованием xOffset для смещения баров по полу
             chart_gender = alt.Chart(df_gender).mark_bar().encode(
                 x=alt.X('emotion:N', title='Эмоция'),
+                # xOffset смещает бары по каждой группе, группируя их по полу
+                xOffset=alt.X('gender:N', title='Пол'),
                 y=alt.Y('count:Q', title='Количество'),
                 color=alt.Color('gender:N', title='Пол', scale=alt.Scale(domain=["Мужчина", "Женщина"]))
             ).properties(width=300, height=300)
+            
             st.altair_chart(chart_gender, use_container_width=True)
+
+        # График: Распределение эмоций по возрастным группам
         with col5:
             st.markdown("**Распределение эмоций по возрастным группам**")
-            # Создаем возрастные группы
+            # Создаем возрастные группы для каждого значения возраста
             combined_df['age_group'] = combined_df['age'].apply(
                 lambda x: 'до 18' if x < 18 else ('18–25' if 18 <= x <= 25 else ('26–40' if 26 <= x <= 40 else ('41–60' if 41 <= x <= 60 else '60+')))
             )
+            # Копируем данные по столбцу 'age_group' и списку эмоций
             df_age_group = combined_df[['age_group'] + emotions].copy()
+            # Преобразуем DataFrame в длинный формат
             df_age_group = df_age_group.melt(id_vars='age_group', value_vars=emotions,
-                                             var_name='emotion', value_name='count')
+                                            var_name='emotion', value_name='count')
+            # Группируем данные по возрастной группе и эмоции
             df_age_group = df_age_group.groupby(['age_group', 'emotion'], as_index=False)['count'].sum()
+            # Преобразуем названия эмоций согласно emotion_map
             df_age_group['emotion'] = df_age_group['emotion'].map(emotion_map)
+            
+            # Чтобы избежать отсутствия комбинаций, создаём все возможные комбинации возрастных групп и эмоций
             age_groups = ['до 18', '18–25', '26–40', '41–60', '60+']
             all_combinations = pd.DataFrame(list(itertools.product(age_groups, list(emotion_map.values()))),
                                             columns=['age_group','emotion'])
             df_age_group = all_combinations.merge(df_age_group, on=['age_group','emotion'], how='left').fillna(0)
+            
+            # Создаём группированный столбчатый график с xOffset для смещения баров по возрастным группам
             chart_age_group = alt.Chart(df_age_group).mark_bar().encode(
                 x=alt.X('emotion:N', title='Эмоция'),
+                # xOffset смещает бары, группируя их по возрастным группам
+                xOffset=alt.X('age_group:N', title='Возрастная группа'),
                 y=alt.Y('count:Q', title='Количество'),
                 color=alt.Color('age_group:N', title='Возрастная группа')
             ).properties(width=300, height=300)
+            
             st.altair_chart(chart_age_group, use_container_width=True)
-        
+
+
         # ===================== Построение 100% накопленных столбчатых графиков =====================
         st.subheader("100% накопленные столбчатые графики")
         col6, col7 = st.columns(2)

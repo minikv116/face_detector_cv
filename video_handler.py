@@ -8,19 +8,30 @@ from deepface import DeepFace
 from collections import Counter
 from ffmpeg import FFmpeg  # Для конвертации видео с использованием ffmpeg
 
-# ===================== Настройка моделей DeepFace и TensorFlow =====================
-MODELS_DIR = Path('models')
-os.environ['DEEPFACE_HOME'] = str(MODELS_DIR)
+def load_deepface_models():
+    """
+    Функция выполняет детекцию на случайном изображении с шумом для предварительной загрузки моделей DeepFace.
+    После этого вызывается функция match_face для тестового поиска совпадений в базе лиц.
+    
+    Документация DeepFace: https://github.com/serengil/deepface
+    """
+    # Генерация случайного изображения с шумом размером 28x28 пикселей
+    random_image = np.random.randint(0, 256, size=(28, 28, 3), dtype=np.uint8)
+    
+    # Вызов анализа на случайном изображении для загрузки моделей
+    analysis_result = DeepFace.analyze(
+        img_path=random_image,
+        actions=['age', 'gender', 'race', 'emotion'],
+        detector_backend='ssd',  # Замените на нужный backend, если требуется
+        align=False,
+        enforce_detection=False,
+        silent=True
+    )
+    print("Модели DeepFace загружены через analyze на случайном изображении.")
+    
+    test_db_path = "./"
+    match_result = match_face(random_image, test_db_path)
 
-import tensorflow as tf
-os.environ['TF_GPU_ALLOCATOR'] = 'cuda_malloc_async'
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as ex:
-        print(ex)
 
 def get_face_matrics(face_result):
     """

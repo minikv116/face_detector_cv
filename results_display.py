@@ -39,13 +39,15 @@ def display_results(csv_path="media/video_results.csv"):
     
     Документация по Altair: https://altair-viz.github.io/
     """
+    # Проверяем, существует ли CSV файл
     if not os.path.exists(csv_path):
         st.error("CSV с результатами не найден. Сначала выполните обработку видео.")
         return
 
+    # Загружаем данные из CSV
     df = pd.read_csv(csv_path)
     
-    # Преобразование значений пола для отображения
+    # Преобразование значений пола для отображения (англ. -> рус.)
     gender_map = {"Man": "Мужчина", "Woman": "Женщина"}
     df['gender'] = df['gender'].map(gender_map).fillna(df['gender'])
     
@@ -63,9 +65,11 @@ def display_results(csv_path="media/video_results.csv"):
         if emo not in df.columns:
             df[emo] = 0
 
+    # Отображение таблицы результатов
     st.subheader("Таблица результатов")
     st.dataframe(df)
 
+    # Построение простых распределений
     st.subheader("Простые распределения")
     col1, col2, col3 = st.columns(3)
     
@@ -84,6 +88,7 @@ def display_results(csv_path="media/video_results.csv"):
     with col2:
         st.markdown("**Распределение по эмоциям**")
         emotion_sums = df[emotions].sum()
+        # Преобразуем ключи эмоций в русские названия
         emotion_sums.index = [emotion_map.get(x, x) for x in emotion_sums.index]
         emotion_chart = alt.Chart(pd.DataFrame({
             'Эмоция': emotion_sums.index,
@@ -109,18 +114,24 @@ def display_results(csv_path="media/video_results.csv"):
         ).properties(width=300, height=300)
         st.altair_chart(age_chart, use_container_width=True)
 
+    # Построение группированных столбчатых графиков
     st.subheader("Группированные столбчатые графики")
     col4, col5 = st.columns(2)
     
     with col4:
         st.markdown("**Распределение эмоций по полу**")
+        # Преобразуем данные в длинный формат для группировки по полу и эмоциям
         df_gender = df[['gender'] + emotions].copy()
         df_gender = df_gender.melt(id_vars='gender', value_vars=emotions,
                                    var_name='emotion', value_name='count')
         df_gender = df_gender.groupby(['gender', 'emotion'], as_index=False)['count'].sum()
+        # Преобразуем названия эмоций в русские
         df_gender['emotion'] = df_gender['emotion'].map(emotion_map)
+        
+        # Построение группированного графика с использованием xOffset для смещения баров по полу
         chart_gender = alt.Chart(df_gender).mark_bar().encode(
             x=alt.X('emotion:N', title='Эмоция'),
+            xOffset=alt.X('gender:N', title='Пол'),
             y=alt.Y('count:Q', title='Количество'),
             color=alt.Color('gender:N', title='Пол', scale=alt.Scale(domain=["Мужчина", "Женщина"]))
         ).properties(width=300, height=300)
@@ -128,23 +139,30 @@ def display_results(csv_path="media/video_results.csv"):
     
     with col5:
         st.markdown("**Распределение эмоций по возрастным группам**")
+        # Преобразуем возраст в возрастные группы
         df['age_group'] = df['age'].apply(categorize_age)
         df_age_group = df[['age_group'] + emotions].copy()
         df_age_group = df_age_group.melt(id_vars='age_group', value_vars=emotions,
                                          var_name='emotion', value_name='count')
         df_age_group = df_age_group.groupby(['age_group', 'emotion'], as_index=False)['count'].sum()
         df_age_group['emotion'] = df_age_group['emotion'].map(emotion_map)
+        
+        # Для корректного отображения всех комбинаций создаём DataFrame с полным набором возрастных групп и эмоций
         age_groups = ['до 18', '18–25', '26–40', '41–60', '60+']
         all_combinations = pd.DataFrame(list(itertools.product(age_groups, list(emotion_map.values()))),
                                         columns=['age_group','emotion'])
         df_age_group = all_combinations.merge(df_age_group, on=['age_group','emotion'], how='left').fillna(0)
+        
+        # Построение группированного графика с использованием xOffset для смещения баров по возрастным группам
         chart_age_group = alt.Chart(df_age_group).mark_bar().encode(
             x=alt.X('emotion:N', title='Эмоция'),
+            xOffset=alt.X('age_group:N', title='Возрастная группа'),
             y=alt.Y('count:Q', title='Количество'),
             color=alt.Color('age_group:N', title='Возрастная группа')
         ).properties(width=300, height=300)
         st.altair_chart(chart_age_group, use_container_width=True)
     
+    # Построение 100% накопленных столбчатых графиков
     st.subheader("100% накопленные столбчатые графики")
     col6, col7 = st.columns(2)
     
